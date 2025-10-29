@@ -56,7 +56,9 @@ Table Users
 
 ### 3. Environment Configuration
 
-**The .env file is already included and configured with your database credentials. Example structure:**
+**Create and Configure the .env File:**
+
+In the root directory of the project, create a new file named .env, then copy the structure below into that file and replace the placeholder values with your actual SQL Server credentials and configuration:
 
 ```
 DB_USER = CREATED SQL SERVER LOGIN NAME
@@ -97,3 +99,36 @@ The project includes scripts to check code quality and formatting.
 | :--- | :--- |
 | `npm run lint` | Run **ESLint** to scan the source code and report errors/warnings. |
 | `npm run format` | Run **Prettier** to auto-format code. |
+
+### 🗂️ Project Structure
+
+```
+USER_API/
+├── DB_USER/
+│   └── UserDBQuery.sql                          # SQL script for database setup
+│
+├── src/
+│   ├── config/
+│   │   └── db.js                                # Database connection setup
+│   │
+│   ├── controllers/
+│   │   └── userController.js                    # Business logic and request handling (CRUD)
+│   │
+│   └── routes/
+│       └── userRoutes.js                        # API routing definitions for user endpoints
+│
+├── .gitattributes
+│
+├── .gitignore                                   # Specifies files/folders to be excluded from Git tracking
+│
+├── .prettierrc                                  # Configuration for Prettier code formatter
+│
+├── eslint.config.mjs                            # Configuration for ESLint linter
+│
+├── package.json                                 # Project metadata, scripts, and dependencies list
+│
+├── README.md                                    # Project documentation and setup guide
+│
+└── server.js                                    # Application entry point (starts the server)
+```
+
