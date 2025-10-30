@@ -105,30 +105,28 @@ The project includes scripts to check code quality and formatting.
 ```
 USER_API/
 ├── DB_USER/
-│   └── UserDBQuery.sql                          # SQL script for database setup
+│   └── UserDBQuery.sql                     # SQL script for database setup
 │
 ├── src/
 │   ├── config/
-│   │   └── db.js                                # Database connection setup
+│   │   └── db.js                           # Database connection setup
+│   │
+│   ├── models/
+│   │   ├── userModel.js                    # Handles DB operations
+│   │   └── userSchema.js                   # Defines user data structure / schema
 │   │
 │   ├── controllers/
-│   │   └── userController.js                    # Business logic and request handling (CRUD)
+│   │   └── userController.js               # Business logic & CRUD request handling
 │   │
 │   └── routes/
-│       └── userRoutes.js                        # API routing definitions for user endpoints
+│       └── userRoutes.js                   # API routing definitions for user endpoints
 │
 ├── .gitattributes
-│
-├── .gitignore                                   # Specifies files/folders to be excluded from Git tracking
-│
-├── .prettierrc                                  # Configuration for Prettier code formatter
-│
-├── eslint.config.mjs                            # Configuration for ESLint linter
-│
-├── package.json                                 # Project metadata, scripts, and dependencies list
-│
-├── README.md                                    # Project documentation and setup guide
-│
-└── server.js                                    # Application entry point (starts the server)
+├── .gitignore                              # Specifies files/folders to be excluded from Git tracking
+├── .prettierrc                             # Configuration for Prettier code formatter
+├── eslint.config.mjs                       # Configuration for ESLint linter
+├── package.json                            # Project metadata, scripts, and dependencies list
+├── README.md                               # Project documentation and setup guide
+└── server.js                               # Application entry point (starts the server)
 ```
 
