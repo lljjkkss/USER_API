@@ -13,17 +13,23 @@ GO
 CREATE TABLE Users (
     UserID INT PRIMARY KEY IDENTITY(1,1),
     UserName NVARCHAR(100) NOT NULL,
-    Email NVARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
 
     CreatedDate DATETIME DEFAULT GETDATE(),
     IsDeleted BIT DEFAULT 0
 );
 GO
 
--- Them nguoi dung moi
+-- Ensure the Email is unique when IsDeleted = 0
+CREATE UNIQUE INDEX IX_Users_Email_NotDeleted
+    ON Users (Email)
+    WHERE IsDeleted = 0;
+GO
+
+-- Create User
 CREATE OR ALTER PROCEDURE spAddUser
     @UserName NVARCHAR(100),
-    @Email NVARCHAR(100)
+    @Email VARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -34,7 +40,7 @@ BEGIN
 END;
 GO
 
--- lay toan bo danh sach nguoi dung
+-- Read Users
 CREATE OR ALTER PROCEDURE spGetUsers
 AS
 BEGIN
@@ -46,7 +52,7 @@ BEGIN
 END;
 GO
 
--- lay nguoi dung theo id
+-- Read User by ID
 CREATE OR ALTER PROCEDURE spGetUserById
     @UserID INT
 AS
@@ -58,11 +64,22 @@ BEGIN
 END;
 GO
 
--- Cap nhat nguoi dung theo id
+CREATE OR ALTER PROCEDURE spGetUserByEmail
+    @Email VARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON
+    SELECT UserID, UserName, Email, CreatedDate
+    FROM Users
+    WHERE Email = @Email AND IsDeleted = 0;
+END;
+GO
+
+-- Update User
 CREATE OR ALTER PROCEDURE spUpdateUser
     @UserID INT,
     @UserName NVARCHAR(100),
-    @Email NVARCHAR(100)
+    @Email VARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -77,7 +94,7 @@ BEGIN
 END;
 GO
 
--- Xoa mem nguoi dung theo id
+-- Soft Delete User
 CREATE OR ALTER PROCEDURE spDeleteUser
     @UserID INT
 AS
@@ -85,6 +102,6 @@ BEGIN
     SET NOCOUNT ON;
     UPDATE Users
     SET IsDeleted = 1
-    WHERE UserID = @UserID;
+    WHERE UserID = @UserID AND IsDeleted = 0;
 END;
 GO

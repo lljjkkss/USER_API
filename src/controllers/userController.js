@@ -1,90 +1,87 @@
-import { poolConnect, pool, sql } from "../config/db.js";
+import { UserModel } from "../models/userModel.js";
 
-// Lấy tất cả user
 export const getUsers = async (req, res) => {
   try {
-    await poolConnect;
-    const request = pool.request();
-    const result = await request.execute("spGetUsers");
-    res.json(result.recordset);
+    const users = await UserModel.getAll();
+    res.json(users);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
   }
 };
 
-// Lấy user theo ID
 export const getUserById = async (req, res) => {
   try {
-    const { id } = req.params;
-    await poolConnect;
-    const request = pool.request();
-    request.input("UserID", sql.Int, id);
-    const result = await request.execute("spGetUserById");
-
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(result.recordset[0]);
+    const user = await UserModel.getById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
   }
 };
 
-// Thêm user mới
 export const createUser = async (req, res) => {
   try {
     const { UserName, Email } = req.body;
-    await poolConnect;
-    const request = pool.request();
-    request.input("UserName", sql.NVarChar, UserName);
-    request.input("Email", sql.NVarChar, Email);
 
-    const result = await request.execute("spAddUser");
-    res.status(201).json({ NewUserID: result.recordset[0].NewUserID });
+    const exists = await UserModel.getByEmail(Email);
+    if (exists) return res.status(400).json({ message: "Email already exists" });
+
+    const newUser = await UserModel.createUser(UserName, Email);
+    res.status(201).json(newUser);
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server Error");
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Cập nhật user
+
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { UserName, Email } = req.body;
-    await poolConnect;
-    const request = pool.request();
-    request.input("UserID", sql.Int, id);
-    request.input("UserName", sql.NVarChar, UserName);
-    request.input("Email", sql.NVarChar, Email);
 
-    const result = await request.execute("spUpdateUser");
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+    const currentUser = await UserModel.getById(id);
+    if (!currentUser) return res.status(404).json({ message: "User not found" });
+
+    if (Email && Email !== currentUser.Email) {
+      const emailExists = await UserModel.getByEmail(Email);
+      if (emailExists && emailExists.UserID !== parseInt(id)) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
     }
 
-    res.json(result.recordset[0]);
+    const updatedUser = await UserModel.updateUser(id, UserName, Email);
+    res.json(updatedUser);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
   }
 };
 
-// Xóa mềm user
 export const deleteUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    await poolConnect;
-    const request = pool.request();
-    request.input("UserID", sql.Int, id);
-    await request.execute("spDeleteUser");
-
+    const affected = await UserModel.softDeleteUser(req.params.id);
+    if (affected === 0) return res.status(404).json({ message: "User not found" });
     res.json({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
+  }
+};
+
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+    const exists = await UserModel.getByEmail(email);
+    res.json({
+      available: !exists,
+      message: exists ? "Email already exists" : "Email is available",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
