@@ -16,6 +16,7 @@ CREATE TABLE Users (
     Email VARCHAR(100) NOT NULL,
 
     CreatedDate DATETIME DEFAULT GETDATE(),
+    LastModifiedDate DATETIME,
     IsDeleted BIT DEFAULT 0
 );
 GO
@@ -45,7 +46,7 @@ CREATE OR ALTER PROCEDURE spGetUsers
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT UserID, UserName, Email, CreatedDate
+    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
     FROM Users
     WHERE IsDeleted = 0
     ORDER BY UserID DESC;
@@ -58,7 +59,7 @@ CREATE OR ALTER PROCEDURE spGetUserById
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT UserID, UserName, Email, CreatedDate
+    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
     FROM Users
     WHERE UserID = @UserID AND IsDeleted = 0;
 END;
@@ -69,7 +70,7 @@ CREATE OR ALTER PROCEDURE spGetUserByEmail
 AS
 BEGIN
     SET NOCOUNT ON
-    SELECT UserID, UserName, Email, CreatedDate
+    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
     FROM Users
     WHERE Email = @Email AND IsDeleted = 0;
 END;
@@ -85,10 +86,11 @@ BEGIN
     SET NOCOUNT ON;
     UPDATE Users
     SET UserName = @UserName,
-        Email = @Email
+        Email = @Email,
+        LastModifiedDate = GETDATE()
     WHERE UserID = @UserID AND IsDeleted = 0;
 
-    SELECT UserID, UserName, Email, CreatedDate
+    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
     FROM Users
     WHERE UserID = @UserID AND IsDeleted = 0;
 END;
