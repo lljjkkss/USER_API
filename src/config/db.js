@@ -12,6 +12,7 @@ const config = {
   options: {
     encrypt: process.env.DB_ENCRYPT === "true",
     trustServerCertificate: true,
+    camelCaseColumns: true
   },
 };
 

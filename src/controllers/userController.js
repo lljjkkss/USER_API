@@ -1,8 +1,8 @@
-import { UserModel } from "../models/userModel.js";
+import { userModel } from "../models/userModel.js";
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await UserModel.getAll();
+    const users = await userModel.getAll();
     res.json(users);
   } catch (err) {
     console.error(err);
@@ -12,7 +12,7 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const user = await UserModel.getById(req.params.id);
+    const user = await userModel.getById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
   } catch (err) {
@@ -23,12 +23,12 @@ export const getUserById = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
-    const { UserName, Email } = req.body;
+    const { userName, email } = req.body;
 
-    const exists = await UserModel.getByEmail(Email);
-    if (exists) return res.status(400).json({ message: "Email already exists" });
+    const existingUser = await userModel.getByEmail(email);
+    if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
-    const newUser = await UserModel.createUser(UserName, Email);
+    const newUser = await userModel.createUser(userName, email);
     res.status(201).json(newUser);
   } catch (err) {
     console.error(err);
@@ -40,19 +40,19 @@ export const createUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { UserName, Email } = req.body;
+    const { userName, email } = req.body;
 
-    const currentUser = await UserModel.getById(id);
+    const currentUser = await userModel.getById(id);
     if (!currentUser) return res.status(404).json({ message: "User not found" });
 
-    if (Email && Email !== currentUser.Email) {
-      const emailExists = await UserModel.getByEmail(Email);
-      if (emailExists && emailExists.UserID !== parseInt(id)) {
+    if (email && email !== currentUser.email) {
+      const otherUser = await userModel.getByEmail(email);
+      if (otherUser && otherUser.userId !== parseInt(id)) {
         return res.status(400).json({ message: "Email already exists" });
       }
     }
 
-    const updatedUser = await UserModel.updateUser(id, UserName, Email);
+    const updatedUser = await userModel.updateUser(id, userName, email);
     res.json(updatedUser);
   } catch (err) {
     console.error(err);
@@ -62,7 +62,7 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
-    const affected = await UserModel.softDeleteUser(req.params.id);
+    const affected = await userModel.softDeleteUser(req.params.id);
     if (affected === 0) return res.status(404).json({ message: "User not found" });
     res.json({ message: "User deleted successfully" });
   } catch (err) {
@@ -75,7 +75,7 @@ export const checkEmail = async (req, res) => {
   try {
     const { email } = req.query;
     if (!email) return res.status(400).json({ message: "Email is required" });
-    const exists = await UserModel.getByEmail(email);
+    const exists = await userModel.getByEmail(email);
     res.json({
       available: !exists,
       message: exists ? "Email already exists" : "Email is available",
