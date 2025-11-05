@@ -1,4 +1,4 @@
 node_modules/
 .env
-Package-lock.json
+package-lock.json
 .prettierignore

@@ -11,9 +11,10 @@ USE UserDB;
 GO
 
 CREATE TABLE Users (
-    UserID INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT PRIMARY KEY IDENTITY(1,1),
     UserName NVARCHAR(100) NOT NULL,
     Email VARCHAR(100) NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
 
     CreatedDate DATETIME DEFAULT GETDATE(),
     LastModifiedDate DATETIME,
@@ -27,17 +28,33 @@ CREATE UNIQUE INDEX IX_Users_Email_NotDeleted
     WHERE IsDeleted = 0;
 GO
 
+CREATE TABLE RefreshTokens (
+    TokenId INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    RefreshToken NVARCHAR(500) NOT NULL,
+    ExpiryDate DATETIME NOT NULL,
+    CONSTRAINT FK_RefreshTokens_Users FOREIGN KEY (UserId)
+        REFERENCES Users(UserId)
+        ON DELETE CASCADE
+);
+GO
+
+CREATE UNIQUE INDEX IX_RefreshTokens_Token
+    ON RefreshTokens(RefreshToken);
+GO
+
 -- Create User
 CREATE OR ALTER PROCEDURE spAddUser
     @UserName NVARCHAR(100),
-    @Email VARCHAR(100)
+    @Email VARCHAR(100),
+    @PasswordHash VARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO Users (UserName, Email)
-    VALUES (@UserName, @Email);
+    INSERT INTO Users (UserName, Email, PasswordHash)
+    VALUES (@UserName, @Email, @PasswordHash);
     
-    SELECT SCOPE_IDENTITY() AS NewUserID;
+    SELECT SCOPE_IDENTITY() AS NewUserId;
 END;
 GO
 
@@ -46,22 +63,22 @@ CREATE OR ALTER PROCEDURE spGetUsers
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
+    SELECT UserId, UserName, Email, PasswordHash, CreatedDate, LastModifiedDate
     FROM Users
     WHERE IsDeleted = 0
-    ORDER BY UserID DESC;
+    ORDER BY UserId DESC;
 END;
 GO
 
--- Read User by ID
+-- Read User by Id
 CREATE OR ALTER PROCEDURE spGetUserById
-    @UserID INT
+    @UserId INT
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
+    SELECT UserId, UserName, Email, PasswordHash, CreatedDate, LastModifiedDate
     FROM Users
-    WHERE UserID = @UserID AND IsDeleted = 0;
+    WHERE UserId = @UserId AND IsDeleted = 0;
 END;
 GO
 
@@ -70,7 +87,7 @@ CREATE OR ALTER PROCEDURE spGetUserByEmail
 AS
 BEGIN
     SET NOCOUNT ON
-    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
+    SELECT UserId, UserName, Email, PasswordHash, CreatedDate, LastModifiedDate
     FROM Users
     WHERE Email = @Email AND IsDeleted = 0;
 END;
@@ -78,32 +95,68 @@ GO
 
 -- Update User
 CREATE OR ALTER PROCEDURE spUpdateUser
-    @UserID INT,
+    @UserId INT,
     @UserName NVARCHAR(100),
-    @Email VARCHAR(100)
+    @Email VARCHAR(100),
+    @PasswordHash VARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
     UPDATE Users
     SET UserName = @UserName,
         Email = @Email,
+        PasswordHash = @PasswordHash,
         LastModifiedDate = GETDATE()
-    WHERE UserID = @UserID AND IsDeleted = 0;
+    WHERE UserId = @UserId AND IsDeleted = 0;
 
-    SELECT UserID, UserName, Email, CreatedDate, LastModifiedDate
+    SELECT UserId, UserName, Email, CreatedDate, LastModifiedDate
     FROM Users
-    WHERE UserID = @UserID AND IsDeleted = 0;
+    WHERE UserId = @UserId AND IsDeleted = 0;
 END;
 GO
 
 -- Soft Delete User
 CREATE OR ALTER PROCEDURE spDeleteUser
-    @UserID INT
+    @UserId INT
 AS
 BEGIN
     SET NOCOUNT ON;
     UPDATE Users
     SET IsDeleted = 1
-    WHERE UserID = @UserID AND IsDeleted = 0;
+    WHERE UserId = @UserId AND IsDeleted = 0;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE spSaveRefreshToken
+    @RefreshToken NVARCHAR(500),
+    @UserId INT,
+    @ExpiryDate DATETIME
+AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO RefreshTokens (RefreshToken, UserId, ExpiryDate)
+    VALUES (@RefreshToken, @UserId, @ExpiryDate);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE spGetRefreshToken
+    @RefreshToken NVARCHAR(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TokenId, UserId, RefreshToken, ExpiryDate
+    FROM RefreshTokens
+    WHERE RefreshToken = @RefreshToken 
+      AND ExpiryDate > GETDATE();
+END;
+GO
+
+CREATE OR ALTER PROCEDURE spDeleteRefreshToken
+    @RefreshToken NVARCHAR(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM RefreshTokens 
+    WHERE RefreshToken = @RefreshToken;
 END;
 GO
